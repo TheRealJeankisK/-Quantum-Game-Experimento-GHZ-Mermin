@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Juego multijugador de demostración de mecánica cuántica - Experimento GHZ/Mermin para 3 jugadores">
+  <title>Quantum Game — Experimento GHZ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Animated background particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SCREEN 1: LOGIN
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="screen-login" class="screen active">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="quantum-icon">⚛️</div>
+        <h1 id="main-title">Quantum Game</h1>
+        <p class="subtitle">Experimento GHZ • 3 Jugadores</p>
+      </div>
+
+      <div class="form-group">
+        <label for="player-name">Tu nombre</label>
+        <input
+          type="text"
+          id="player-name"
+          placeholder="Escribe tu nombre..."
+          maxlength="20"
+          autocomplete="off"
+        >
+      </div>
+
+      <button id="btn-join" class="btn btn-primary btn-full" disabled>
+        <span class="btn-text">Ingresar al juego</span>
+        <span class="btn-icon">→</span>
+      </button>
+
+      <p id="error-msg" class="error-msg hidden"></p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SCREEN 2: WAITING FOR PLAYERS
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="screen-waiting" class="screen hidden">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="spinner"></div>
+        <h2>Esperando jugadores</h2>
+        <p class="subtitle" id="player-count-text">0 / 3 jugadores</p>
+      </div>
+
+      <div id="player-list" class="player-list"></div>
+
+      <div class="waiting-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SCREEN 3: GAME
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="screen-game" class="screen hidden">
+    <div class="panel panel-game">
+      <div class="panel-header">
+        <h2>Tu Tarjeta</h2>
+        <p class="subtitle" id="game-player-name"></p>
+      </div>
+
+      <!-- Color card -->
+      <div id="card-display" class="card-display">
+        <div class="card-inner">
+          <div class="card-glow"></div>
+          <span class="card-label">Tu tarjeta</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Oracle section -->
+      <div class="game-section">
+        <h3 class="section-title">
+          <span class="section-icon">🔮</span> Consultar al Oráculo
+          <span class="badge badge-optional">Opcional</span>
+        </h3>
+
+        <div class="form-group">
+          <label for="color-choice">Elige un color</label>
+          <select id="color-choice" class="select">
+            <option value="">— Seleccionar —</option>
+            <option value="red">Rojo</option>
+            <option value="blue">Azul</option>
+          </select>
+        </div>
+
+        <button id="btn-oracle" class="btn btn-oracle" disabled>
+          <span class="btn-text">🔮 Preguntar al oráculo</span>
+        </button>
+
+        <div id="oracle-result" class="oracle-result hidden">
+          <div class="oracle-label">El oráculo dice:</div>
+          <div id="oracle-value" class="oracle-value"></div>
+          <p class="oracle-hint">Esto es solo una sugerencia. Puedes elegir lo que quieras abajo.</p>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Answer section -->
+      <div class="game-section">
+        <h3 class="section-title">
+          <span class="section-icon">📤</span> Tu Respuesta
+        </h3>
+
+        <div class="form-group">
+          <label for="value-choice">Elige tu valor</label>
+          <select id="value-choice" class="select">
+            <option value="">— Seleccionar —</option>
+            <option value="1">+1</option>
+            <option value="-1">–1</option>
+          </select>
+        </div>
+
+        <button id="btn-submit" class="btn btn-primary btn-full" disabled>
+          <span class="btn-text">Enviar mi respuesta</span>
+          <span class="btn-icon">✓</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SCREEN 4: WAITING FOR SUBMISSIONS
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="screen-waiting-submit" class="screen hidden">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="spinner"></div>
+        <h2>Respuesta enviada</h2>
+        <p class="subtitle">Esperando a los jugadores restantes</p>
+      </div>
+
+      <p id="submit-count-text" class="count-text">0 / 3 han respondido</p>
+
+      <div class="waiting-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SCREEN 5: RESULTS
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="screen-results" class="screen hidden">
+    <div class="panel panel-results">
+      <div class="panel-header">
+        <h2>Resultados</h2>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="results-table" class="results-table">
+          <thead>
+            <tr>
+              <th>Jugador</th>
+              <th>Tarjeta</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="joint-answer" id="joint-answer"></div>
+
+      <div id="result-banner" class="result-banner">
+        <div id="result-emoji" class="result-emoji"></div>
+        <div id="result-text" class="result-text"></div>
+      </div>
+
+      <button id="btn-new-game" class="btn btn-primary btn-full">
+        <span class="btn-text">🔄 Nueva partida</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
