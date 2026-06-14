@@ -101,10 +101,12 @@ io.on('connection', (socket) => {
     game.players.push(player);
     console.log(`[Join] "${name}" joined as Player ${game.players.length} (${socket.id})`);
 
-    // Notify ALL connected sockets about the updated player list
-    io.emit('player-joined', {
-      count: game.players.length,
-      names: game.players.map(p => p.name)
+    // Notify ONLY game players about the updated player list
+    game.players.forEach(p => {
+      io.to(p.id).emit('player-joined', {
+        count: game.players.length,
+        names: game.players.map(p2 => p2.name)
+      });
     });
 
     // If we have 3 players, start the game!
@@ -246,9 +248,12 @@ io.on('connection', (socket) => {
 
       if (removed) {
         console.log(`[Lobby] "${removed.name}" left the lobby`);
-        io.emit('player-joined', {
-          count: game.players.length,
-          names: game.players.map(p => p.name)
+        // Only notify remaining game players
+        game.players.forEach(p => {
+          io.to(p.id).emit('player-joined', {
+            count: game.players.length,
+            names: game.players.map(p2 => p2.name)
+          });
         });
       }
     } else if (game.phase === 'playing') {
@@ -256,12 +261,16 @@ io.on('connection', (socket) => {
       const wasInGame = game.players.some(p => p.id === socket.id);
       if (wasInGame) {
         const disconnectedName = game.players.find(p => p.id === socket.id)?.name;
+        // Save other players' IDs before resetting
+        const otherPlayerIds = game.players.filter(p => p.id !== socket.id).map(p => p.id);
         console.log(`[Game] "${disconnectedName}" disconnected during game. Resetting.`);
         resetGame();
 
-        // Notify all remaining connected sockets
-        io.emit('player-disconnected', {
-          message: `${disconnectedName} se desconectó. La partida se reinició.`
+        // Notify ONLY the other game players (not everyone)
+        otherPlayerIds.forEach(id => {
+          io.to(id).emit('player-disconnected', {
+            message: `${disconnectedName} se desconectó. La partida se reinició.`
+          });
         });
       }
     }
