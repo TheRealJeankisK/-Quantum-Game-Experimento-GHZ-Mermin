@@ -114,9 +114,18 @@ els.nameInput.addEventListener('keydown', (e) => {
 els.btnJoin.addEventListener('click', () => {
   const name = els.nameInput.value.trim();
   if (!name) return;
+  if (els.btnJoin.disabled) return;
 
   els.btnJoin.disabled = true;
+  els.errorMsg.classList.add('hidden');
   socket.emit('join-game', { name });
+
+  // Safety: re-enable button after 3 seconds if no response
+  setTimeout(() => {
+    if (clientState === 'login') {
+      els.btnJoin.disabled = !els.nameInput.value.trim();
+    }
+  }, 3000);
 });
 
 // ── Game Controls ──────────────────────────────────────────────
@@ -174,13 +183,17 @@ function resetClientState() {
 
 // Initial state on connect
 socket.on('game-state', (data) => {
+  if (clientState !== 'login') return; // Only handle if we're on login screen
+
   if (data.phase === 'playing') {
-    els.errorMsg.textContent = 'El juego está lleno. Espera a que termine la partida actual.';
+    els.errorMsg.textContent = 'Hay una partida en curso. Espera a que termine o recarga en unos minutos.';
     els.errorMsg.classList.remove('hidden');
-    els.btnJoin.disabled = true;
-  } else if (data.phase === 'finished') {
-    // Game just finished, we can join next round
-    // Do nothing, let user enter name normally
+    // Keep button enabled so user can retry
+    els.btnJoin.disabled = !els.nameInput.value.trim();
+  } else if (data.phase === 'finished' || data.phase === 'lobby') {
+    // Game available, make sure button works
+    els.errorMsg.classList.add('hidden');
+    els.btnJoin.disabled = !els.nameInput.value.trim();
   }
 });
 
@@ -313,15 +326,26 @@ function escapeHtml(text) {
 // ── Reconnection Handling ──────────────────────────────────────
 socket.on('connect', () => {
   console.log('Connected to server');
+  // Re-enable button if we're on login screen
+  if (clientState === 'login') {
+    els.btnJoin.disabled = !els.nameInput.value.trim();
+    els.errorMsg.classList.add('hidden');
+  }
 });
 
 socket.on('disconnect', () => {
   console.log('Disconnected from server');
 });
 
-socket.on('reconnect', () => {
+socket.io.on('reconnect', () => {
   console.log('Reconnected to server');
-  // After reconnection, go back to login since we lost our state
-  resetClientState();
-  showScreen('login');
+  // If we were in a game that's now lost, go back to login
+  if (clientState === 'playing' || clientState === 'waitingSubmit' || clientState === 'waiting') {
+    resetClientState();
+    showScreen('login');
+  }
+  // If already on login, just re-enable the button
+  if (clientState === 'login') {
+    els.btnJoin.disabled = !els.nameInput.value.trim();
+  }
 });
