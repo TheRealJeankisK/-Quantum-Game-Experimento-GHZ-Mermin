@@ -2,7 +2,13 @@
 //  QUANTUM GAME — Client-side Logic
 // ═══════════════════════════════════════════════════════════════
 
-const socket = io();
+const socket = io({
+  transports: ['polling', 'websocket'],
+  upgrade: true,
+  reconnection: true,
+  reconnectionAttempts: 10,
+  reconnectionDelay: 1000
+});
 
 // ── Client State ───────────────────────────────────────────────
 let clientState = 'login'; // 'login' | 'waiting' | 'playing' | 'waitingSubmit' | 'results'
